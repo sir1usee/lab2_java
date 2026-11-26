@@ -1,94 +1,204 @@
-import javax.swing.*;
-import java.awt.*;
+package bsu.rfe.java.group7.lab2.Zarubski.varA;
 
-public class Main extends JFrame {
-    private final Formula formula = new Formula();
+// Импортируются классы, используемые в приложении
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
-    private final JTextField xField = new JTextField("1", 8);
-    private final JTextField yField = new JTextField("1", 8);
-    private final JTextField zField = new JTextField("1", 8);
-    private final JTextField resultField = new JTextField(15);
-    private final JRadioButton f1 = new JRadioButton("Формула №1", true);
-    private final JRadioButton f2 = new JRadioButton("Формула №2");
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.ButtonGroup;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JRadioButton;
+import javax.swing.JTextField;
 
-    public Main() {
-        super("Лабораторная: формулы");
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setLayout(new BorderLayout(10, 10));
+@SuppressWarnings("serial")
+// Главный класс приложения, он же класс фрейма
+public class MainFrame extends JFrame {
+    // Размеры окна приложения в виде констант
+    private static final int WIDTH = 600;
+    private static final int HEIGHT = 360;
 
-        ButtonGroup group = new ButtonGroup();
-        group.add(f1);
-        group.add(f2);
+    // Текстовые поля для считывания значений переменных
+    private JTextField textFieldX;
+    private JTextField textFieldY;
+    private JTextField textFieldZ;
 
-        JPanel top = new JPanel();
-        top.add(f1);
-        top.add(f2);
+    // Текстовое поле для отображения результата
+    private JTextField textFieldResult;
 
-        JPanel inputs = new JPanel();
-        inputs.add(new JLabel("x:"));
-        inputs.add(xField);
-        inputs.add(new JLabel("y:"));
-        inputs.add(yField);
-        inputs.add(new JLabel("z:"));
-        inputs.add(zField);
+    // Группа радио-кнопок для обеспечения уникальности выделения в группе
+    private ButtonGroup radioButtons = new ButtonGroup();
 
-        JPanel north = new JPanel(new GridLayout(2, 1));
-        north.add(top);
-        north.add(inputs);
+    // Контейнер для отображения радио-кнопок
+    private Box hboxFormulaType = Box.createHorizontalBox();
 
-        resultField.setEditable(false);
-        JPanel center = new JPanel();
-        center.add(new JLabel("Результат:"));
-        center.add(resultField);
+    private int formulaId = 1;
 
-        JButton calc = new JButton("Вычислить");
-        JButton mc = new JButton("MC");
-        JButton mPlus = new JButton("M+");
-        JPanel buttons = new JPanel();
-        buttons.add(calc);
-        buttons.add(mc);
-        buttons.add(mPlus);
+    // Объект класса Formula: вычисления и внутренняя переменная sum
+    private Formula formula = new Formula();
 
-        add(north, BorderLayout.NORTH);
-        add(center, BorderLayout.CENTER);
-        add(buttons, BorderLayout.SOUTH);
-
-        calc.addActionListener(e -> {
-            Double r = compute();
-            if (r != null) resultField.setText(String.valueOf(r));
-        });
-
-        mc.addActionListener(e -> {
-            formula.clearSum();
-            resultField.setText(String.valueOf(formula.getSum()));
-        });
-
-        mPlus.addActionListener(e -> {
-            Double r = compute();
-            if (r != null) {
-                resultField.setText(String.valueOf(formula.addToSum(r)));
+    // Вспомогательный метод для добавления кнопок на панель
+    private void addRadioButton(String buttonName, final int formulaId) {
+        JRadioButton button = new JRadioButton(buttonName);
+        button.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ev) {
+                MainFrame.this.formulaId = formulaId;
             }
         });
-
-        pack();
-        setLocationRelativeTo(null);
+        radioButtons.add(button);
+        hboxFormulaType.add(button);
     }
 
-    // Считывает x, y, z и считает выбранную формулу. При ошибке ввода возвращает null.
-    private Double compute() {
+    // Считывает x, y, z и считает выбранную формулу.
+    // При ошибке формата возвращает null
+    private Double calculate() {
         try {
-            Double x = Double.parseDouble(xField.getText().trim().replace(',', '.'));
-            Double y = Double.parseDouble(yField.getText().trim().replace(',', '.'));
-            Double z = Double.parseDouble(zField.getText().trim().replace(',', '.'));
-            return f1.isSelected() ? formula.calculate1(x, y, z) : formula.calculate2(x, y, z);
+            Double x = Double.parseDouble(textFieldX.getText());
+            Double y = Double.parseDouble(textFieldY.getText());
+            Double z = Double.parseDouble(textFieldZ.getText());
+            if (formulaId == 1)
+                return formula.calculate1(x, y, z);
+            else
+                return formula.calculate2(x, y, z);
         } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Введите корректные числа в x, y, z",
-                    "Ошибка", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(MainFrame.this,
+                    "Ошибка в формате записи числа с плавающей точкой",
+                    "Ошибочный формат числа", JOptionPane.WARNING_MESSAGE);
             return null;
         }
     }
 
+    // Конструктор класса
+    public MainFrame() {
+        super("Вычисление формулы");
+        setSize(WIDTH, HEIGHT);
+        Toolkit kit = Toolkit.getDefaultToolkit();
+        // Отцентрировать окно приложения на экране
+        setLocation((kit.getScreenSize().width - WIDTH) / 2,
+                (kit.getScreenSize().height - HEIGHT) / 2);
+
+        hboxFormulaType.add(Box.createHorizontalGlue());
+        addRadioButton("Формула 1", 1);
+        addRadioButton("Формула 2", 2);
+        radioButtons.setSelected(
+                radioButtons.getElements().nextElement().getModel(), true);
+        hboxFormulaType.add(Box.createHorizontalGlue());
+        hboxFormulaType.setBorder(BorderFactory.createLineBorder(Color.YELLOW));
+
+        // Создать область с полями ввода для X, Y и Z
+        JLabel labelForX = new JLabel("X:");
+        textFieldX = new JTextField("0", 10);
+        textFieldX.setMaximumSize(textFieldX.getPreferredSize());
+
+        JLabel labelForY = new JLabel("Y:");
+        textFieldY = new JTextField("0", 10);
+        textFieldY.setMaximumSize(textFieldY.getPreferredSize());
+
+        JLabel labelForZ = new JLabel("Z:");
+        textFieldZ = new JTextField("0", 10);
+        textFieldZ.setMaximumSize(textFieldZ.getPreferredSize());
+
+        Box hboxVariables = Box.createHorizontalBox();
+        hboxVariables.setBorder(BorderFactory.createLineBorder(Color.RED));
+        hboxVariables.add(Box.createHorizontalGlue());
+        hboxVariables.add(labelForX);
+        hboxVariables.add(Box.createHorizontalStrut(10));
+        hboxVariables.add(textFieldX);
+        hboxVariables.add(Box.createHorizontalStrut(50));
+        hboxVariables.add(labelForY);
+        hboxVariables.add(Box.createHorizontalStrut(10));
+        hboxVariables.add(textFieldY);
+        hboxVariables.add(Box.createHorizontalStrut(50));
+        hboxVariables.add(labelForZ);
+        hboxVariables.add(Box.createHorizontalStrut(10));
+        hboxVariables.add(textFieldZ);
+        hboxVariables.add(Box.createHorizontalGlue());
+
+        // Создать область для вывода результата
+        JLabel labelForResult = new JLabel("Результат:");
+        textFieldResult = new JTextField("0", 15);
+        textFieldResult.setMaximumSize(textFieldResult.getPreferredSize());
+
+        Box hboxResult = Box.createHorizontalBox();
+        hboxResult.add(Box.createHorizontalGlue());
+        hboxResult.add(labelForResult);
+        hboxResult.add(Box.createHorizontalStrut(10));
+        hboxResult.add(textFieldResult);
+        hboxResult.add(Box.createHorizontalGlue());
+        hboxResult.setBorder(BorderFactory.createLineBorder(Color.BLUE));
+
+        // Создать область для кнопок
+        JButton buttonCalc = new JButton("Вычислить");
+        buttonCalc.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ev) {
+                Double result = calculate();
+                if (result != null)
+                    textFieldResult.setText(result.toString());
+            }
+        });
+
+        JButton buttonReset = new JButton("Очистить поля");
+        buttonReset.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ev) {
+                textFieldX.setText("0");
+                textFieldY.setText("0");
+                textFieldZ.setText("0");
+                textFieldResult.setText("0");
+            }
+        });
+
+        // MC: обнулить сумму и показать её в области результата
+        JButton buttonMC = new JButton("MC");
+        buttonMC.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ev) {
+                formula.clearSum();
+                textFieldResult.setText(formula.getSum().toString());
+            }
+        });
+
+        // M+: прибавить результат текущего вычисления к сумме и показать сумму
+        JButton buttonMPlus = new JButton("M+");
+        buttonMPlus.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ev) {
+                Double result = calculate();
+                if (result != null)
+                    textFieldResult.setText(formula.addToSum(result).toString());
+            }
+        });
+
+        Box hboxButtons = Box.createHorizontalBox();
+        hboxButtons.add(Box.createHorizontalGlue());
+        hboxButtons.add(buttonCalc);
+        hboxButtons.add(Box.createHorizontalStrut(20));
+        hboxButtons.add(buttonReset);
+        hboxButtons.add(Box.createHorizontalStrut(20));
+        hboxButtons.add(buttonMC);
+        hboxButtons.add(Box.createHorizontalStrut(20));
+        hboxButtons.add(buttonMPlus);
+        hboxButtons.add(Box.createHorizontalGlue());
+        hboxButtons.setBorder(BorderFactory.createLineBorder(Color.GREEN));
+
+        // Связать области воедино в компоновке BoxLayout
+        Box contentBox = Box.createVerticalBox();
+        contentBox.add(Box.createVerticalGlue());
+        contentBox.add(hboxFormulaType);
+        contentBox.add(hboxVariables);
+        contentBox.add(hboxResult);
+        contentBox.add(hboxButtons);
+        contentBox.add(Box.createVerticalGlue());
+        getContentPane().add(contentBox, BorderLayout.CENTER);
+    }
+
+    // Главный метод класса
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new Main().setVisible(true));
+        MainFrame frame = new MainFrame();
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setVisible(true);
     }
 }
